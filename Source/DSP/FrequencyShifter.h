@@ -12,7 +12,7 @@
 
 #include <JuceHeader.h>
 #include "HilbertProcessor.h"
-#include "Vendor/hilbert-iir/hilbert.h"
+#include "../Vendor/hilbert-iir/hilbert.h"
 
 namespace xynth
 {

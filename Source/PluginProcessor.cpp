@@ -22,8 +22,11 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
                        ), myValueTreeState(*this, nullptr, Identifier("myParameters"), {
          std::make_unique<AudioParameterFloat>("cutoff", "CUTOFF", NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.2f), 1000.0f),
          std::make_unique<AudioParameterFloat>("resonance", "RES", 0.707f, 10.0f, 2.66f),
+         std::make_unique<AudioParameterFloat>(ParameterID{ "shift",  1 }, "Shift", -1000.f, 1000.f, 0.f),
          std::make_unique<AudioParameterBool>("bypass", "BYPASS", false)
-     })
+         
+     }),
+        frequencyShifter(*myValueTreeState.getRawParameterValue("shift"))
 #endif
 {
     myCutoffptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("cutoff"));
@@ -108,6 +111,9 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     
     myFilter.prepare(mySpec);
     myFilter.reset();
+    
+    frequencyShifter.prepare(mySpec);
+    frequencyShifter.reset();
 }
 
 void ModalShiftAudioProcessor::releaseResources()
@@ -157,6 +163,7 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
         
         myFilter.process(myContext);
+        frequencyShifter.process(myContext);
     }
     
     

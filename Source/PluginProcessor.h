@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "DSP/FrequencyShifter.h"
 
 //==============================================================================
 /**
@@ -22,6 +23,8 @@ public:
     AudioParameterFloat* myResonanceptr;
     AudioParameterChoice* mySlopeptr;
     AudioParameterBool* myBypassptr;
+    
+    AudioParameterFloat* myFreqShiftptr;
     
     
     //==============================================================================
@@ -66,6 +69,10 @@ private:
     dsp::ProcessSpec mySpec;
     
     juce::dsp::Oscillator<float> osc;
+    
+    xynth::FrequencyShifter frequencyShifter;
+    
+    
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModalShiftAudioProcessor)
 };

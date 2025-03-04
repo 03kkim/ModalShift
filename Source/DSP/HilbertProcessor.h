@@ -11,7 +11,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "Vendor/hilbert-iir/hilbert.h"
+#include "../Vendor/hilbert-iir/hilbert.h"
 
 namespace xynth
 {

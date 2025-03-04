@@ -3,6 +3,16 @@
 <JUCERPROJECT id="sTWE7X" name="ModalShift" projectType="audioplug" useAppConfig="0"
               jucerFormatVersion="1" pluginCharacteristicsValue="pluginProducesMidiOut,pluginWantsMidiIn">
   <MAINGROUP id="W7z1Au" name="ModalShift">
+    <GROUP id="{7699036B-74D0-B92E-29B0-4F5B1F925F4C}" name="DSP">
+      <FILE id="WtZTao" name="FrequencyShifter.cpp" compile="1" resource="0"
+            file="Source/DSP/FrequencyShifter.cpp"/>
+      <FILE id="ggzCkE" name="FrequencyShifter.h" compile="0" resource="0"
+            file="Source/DSP/FrequencyShifter.h"/>
+      <FILE id="BehJ3F" name="HilbertProcessor.cpp" compile="1" resource="0"
+            file="Source/DSP/HilbertProcessor.cpp"/>
+      <FILE id="cCF7GJ" name="HilbertProcessor.h" compile="0" resource="0"
+            file="Source/DSP/HilbertProcessor.h"/>
+    </GROUP>
     <GROUP id="{F3336CB8-D76A-4063-E539-5B1D08D43CBA}" name="Source">
       <FILE id="cDF2ZN" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
@@ -11,6 +21,31 @@
       <FILE id="cb61O4" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="meGINm" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+    </GROUP>
+    <GROUP id="{43E110E8-9705-3299-A2F9-F3597491692A}" name="Vendor">
+      <GROUP id="{ACF771E0-4368-4443-1F38-797A83F94AF4}" name="hilbert-iir">
+        <GROUP id="{F761934E-214B-3706-973A-B8A0632839B3}" name="design">
+          <GROUP id="{38AAF0EC-4384-A0C0-B669-656DE7C02D68}" name="plots">
+            <FILE id="Ttyosa" name="plot-44100@2x.png" compile="0" resource="1"
+                  file="Source/Vendor/hilbert-iir/design/plots/plot-44100@2x.png"/>
+            <FILE id="oZD92I" name="plot-48000@2x.png" compile="0" resource="1"
+                  file="Source/Vendor/hilbert-iir/design/plots/plot-48000@2x.png"/>
+            <FILE id="xn8I2i" name="plot-96000@2x.png" compile="0" resource="1"
+                  file="Source/Vendor/hilbert-iir/design/plots/plot-96000@2x.png"/>
+            <FILE id="KJA0OU" name="plot-192000@2x.png" compile="0" resource="1"
+                  file="Source/Vendor/hilbert-iir/design/plots/plot-192000@2x.png"/>
+          </GROUP>
+          <FILE id="BPdFND" name="design.py" compile="0" resource="1" file="Source/Vendor/hilbert-iir/design/design.py"/>
+          <FILE id="DS0RKp" name="main.cpp" compile="1" resource="0" file="Source/Vendor/hilbert-iir/design/main.cpp"/>
+          <FILE id="L2jWXe" name="Makefile" compile="0" resource="1" file="Source/Vendor/hilbert-iir/design/Makefile"/>
+          <FILE id="iJkb8c" name="plot.h" compile="0" resource="0" file="Source/Vendor/hilbert-iir/design/plot.h"/>
+          <FILE id="T3zSTz" name="simple-fft.h" compile="0" resource="0" file="Source/Vendor/hilbert-iir/design/simple-fft.h"/>
+        </GROUP>
+        <FILE id="AH267C" name="hilbert.h" compile="0" resource="0" file="Source/Vendor/hilbert-iir/hilbert.h"/>
+        <FILE id="yE2n97" name="LICENSE.txt" compile="0" resource="1" file="Source/Vendor/hilbert-iir/LICENSE.txt"/>
+        <FILE id="ZoBrG0" name="README.md" compile="0" resource="1" file="Source/Vendor/hilbert-iir/README.md"/>
+        <FILE id="ItaRxq" name="SUPPORT.txt" compile="0" resource="1" file="Source/Vendor/hilbert-iir/SUPPORT.txt"/>
+      </GROUP>
     </GROUP>
   </MAINGROUP>
   <MODULES>
