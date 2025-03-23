@@ -10,6 +10,8 @@
 
 #include <JuceHeader.h>
 #include "DSP/FrequencyShifter.h"
+#include "Helpers.h"
+#include "Params.h"
 
 //==============================================================================
 /**
@@ -18,13 +20,14 @@ class ModalShiftAudioProcessor  : public juce::AudioProcessor
 {
 public:
     
-    AudioProcessorValueTreeState myValueTreeState;
-    AudioParameterFloat* myCutoffptr;
-    AudioParameterFloat* myResonanceptr;
-    AudioParameterChoice* mySlopeptr;
-    AudioParameterBool* myBypassptr;
+    AudioProcessorValueTreeState apvts;
+//    AudioParameterFloat* myRootptr;
+//    AudioParameterFloat* myResonanceptr;
+//    AudioParameterChoice* mySlopeptr;
+//    AudioParameterBool* myBypassptr;
     
-    AudioParameterFloat* myFreqShiftptr;
+//    AudioParameterFloat* myFreqShiftptr;
+    std::vector<param::RAP*> params;
     
     
     //==============================================================================
@@ -70,8 +73,8 @@ private:
     
     juce::dsp::Oscillator<float> osc;
     
-    xynth::FrequencyShifter frequencyShifter;
-    
+//    xynth::FrequencyShifter frequencyShifter;
+//    NoteParameter* noteParam;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModalShiftAudioProcessor)

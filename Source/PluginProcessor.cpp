@@ -19,19 +19,26 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), myValueTreeState(*this, nullptr, Identifier("myParameters"), {
-         std::make_unique<AudioParameterFloat>("cutoff", "CUTOFF", NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.2f), 1000.0f),
-         std::make_unique<AudioParameterFloat>("resonance", "RES", 0.707f, 10.0f, 2.66f),
-         std::make_unique<AudioParameterFloat>(ParameterID{ "shift",  1 }, "Shift", -1000.f, 1000.f, 0.f),
-         std::make_unique<AudioParameterBool>("bypass", "BYPASS", false)
-         
-     }),
-        frequencyShifter(*myValueTreeState.getRawParameterValue("shift"))
+                       ), apvts(*this, nullptr, "Parameters", param::createParameterLayout())
+//  {
+//         std::make_unique<AudioParameterFloat>("root", "ROOT", 20.0f, 20000.0f, 440.0f),
+//         std::make_unique<AudioParameterFloat>("resonance", "RES", 0.707f, 10.0f, 2.66f),
+//         std::make_unique<AudioParameterFloat>(ParameterID{ "shift",  1 }, "Shift", -1000.f, 1000.f, 0.f),
+//         std::make_unique<AudioParameterBool>("bypass", "BYPASS", false),
+//         std::make_unique<NoteParameter>("note", "NOTE")
+//         
+//     }),
+//        frequencyShifter(*apvts.getRawParameterValue("shift"))
 #endif
 {
-    myCutoffptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("cutoff"));
-    myResonanceptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("resonance"));
-    myBypassptr = dynamic_cast<AudioParameterBool*>(myValueTreeState.getParameter("bypass"));
+//    myRootptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("root"));
+//    myResonanceptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("resonance"));
+//    myBypassptr = dynamic_cast<AudioParameterBool*>(myValueTreeState.getParameter("bypass"));
+    for (auto i = 0; i < param::NumParams; ++i)
+    {
+        auto pID = static_cast<param::PID>(i);
+        params.push_back(apvts.getParameter(param::toID(pID)));
+    }
 
     
 }
@@ -112,8 +119,8 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     myFilter.prepare(mySpec);
     myFilter.reset();
     
-    frequencyShifter.prepare(mySpec);
-    frequencyShifter.reset();
+//    frequencyShifter.prepare(mySpec);
+//    frequencyShifter.reset();
 }
 
 void ModalShiftAudioProcessor::releaseResources()
@@ -151,20 +158,21 @@ bool ModalShiftAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     
+    const auto rootPID = static_cast<int>(param::PID::Root);
+    const auto resonancePID = static_cast<int>(param::PID::Resonance);
+    myFilter.setCutoffFrequency(params[rootPID]->getValue());
+    myFilter.setResonance(params[resonancePID]->getValue());
     
-    myFilter.setCutoffFrequency(myCutoffptr->get());
-    myFilter.setResonance(myResonanceptr->get());
-    
-    if (! myBypassptr->get())
-    {
-        auto myBlock = dsp::AudioBlock<float>(buffer);
-        
-        // Replacing context -> puts the processed audio back into the audio stream
-        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
-        
-        myFilter.process(myContext);
-        frequencyShifter.process(myContext);
-    }
+//    if (! myBypassptr->get())
+//    {
+//        auto myBlock = dsp::AudioBlock<float>(buffer);
+//        
+//        // Replacing context -> puts the processed audio back into the audio stream
+//        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
+//        
+//        myFilter.process(myContext);
+//        frequencyShifter.process(myContext);
+//    }
     
     
     
@@ -213,7 +221,7 @@ void ModalShiftAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
     // You should use this method to store your parameters in the memory block.
     // You could do that either as raw data, or use the XML or ValueTree classes
     // as intermediaries to make it easy to save and load complex data.
-    auto state = myValueTreeState.copyState();
+    auto state = apvts.copyState();
     std::unique_ptr<XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
 }
@@ -227,9 +235,9 @@ void ModalShiftAudioProcessor::setStateInformation (const void* data, int sizeIn
     
     if (xmlState != nullptr)
     {
-        if (xmlState->hasTagName(myValueTreeState.state.getType()))
+        if (xmlState->hasTagName(apvts.state.getType()))
         {
-            myValueTreeState.replaceState(ValueTree::fromXml(*xmlState));
+            apvts.replaceState(ValueTree::fromXml(*xmlState));
         }
     }
 }

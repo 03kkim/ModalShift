@@ -14,6 +14,8 @@
             file="Source/DSP/HilbertProcessor.h"/>
     </GROUP>
     <GROUP id="{F3336CB8-D76A-4063-E539-5B1D08D43CBA}" name="Source">
+      <FILE id="PJqOFA" name="Params.h" compile="0" resource="0" file="Source/Params.h"/>
+      <FILE id="CKZ3iX" name="Helpers.h" compile="0" resource="0" file="Source/Helpers.h"/>
       <FILE id="cDF2ZN" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="qSNvAF" name="PluginProcessor.h" compile="0" resource="0"
