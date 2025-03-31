@@ -10,7 +10,6 @@
 
 #include <JuceHeader.h>
 #include "DSP/FrequencyShifter.h"
-#include "Helpers.h"
 #include "Params.h"
 
 //==============================================================================
@@ -73,7 +72,7 @@ private:
     
     juce::dsp::Oscillator<float> osc;
     
-//    xynth::FrequencyShifter frequencyShifter;
+    xynth::FrequencyShifter frequencyShifter;
 //    NoteParameter* noteParam;
     
     //==============================================================================

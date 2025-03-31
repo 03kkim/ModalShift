@@ -67,12 +67,12 @@ inline String toName(PID pID)
     }
 }
 
-inline String toID(const String& name)
+inline ParameterID toID(const String& name)
 {
-    return name.toLowerCase().removeCharacters(" ");
+    return ParameterID{name.toLowerCase().removeCharacters(" "), 1};
 }
 
-inline String toID(PID pID)
+inline ParameterID toID(PID pID)
 {
     return toID(toName(pID));
 }
@@ -289,7 +289,7 @@ inline void createParam(UniqueRAPVector& vec, PID pID, RangeF range, float defau
     StrToVal strToVal;
     
     const auto name = toName(pID);
-    const auto id = toID(name);
+    const ParameterID id = toID(name);
     
     switch (unit)
     {
@@ -328,7 +328,7 @@ inline Layout createParameterLayout()
 {
     UniqueRAPVector params;
     
-    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
+//    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
     createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
     createParam(params, PID::Shift, range::lin(-1000.f, 1000.f), 0.f, Unit::Hz);

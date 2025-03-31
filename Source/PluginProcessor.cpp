@@ -19,7 +19,7 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), apvts(*this, nullptr, "Parameters", param::createParameterLayout())
+                       ), apvts(*this, nullptr, "Parameters", param::createParameterLayout()),
 //  {
 //         std::make_unique<AudioParameterFloat>("root", "ROOT", 20.0f, 20000.0f, 440.0f),
 //         std::make_unique<AudioParameterFloat>("resonance", "RES", 0.707f, 10.0f, 2.66f),
@@ -28,7 +28,7 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
 //         std::make_unique<NoteParameter>("note", "NOTE")
 //         
 //     }),
-//        frequencyShifter(*apvts.getRawParameterValue("shift"))
+        frequencyShifter(*apvts.getRawParameterValue("shift"))
 #endif
 {
 //    myRootptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("root"));
@@ -37,7 +37,7 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
     for (auto i = 0; i < param::NumParams; ++i)
     {
         auto pID = static_cast<param::PID>(i);
-        params.push_back(apvts.getParameter(param::toID(pID)));
+        params.push_back(apvts.getParameter(param::toID(pID).getParamID()));
     }
 
     
@@ -119,8 +119,8 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     myFilter.prepare(mySpec);
     myFilter.reset();
     
-//    frequencyShifter.prepare(mySpec);
-//    frequencyShifter.reset();
+    frequencyShifter.prepare(mySpec);
+    frequencyShifter.reset();
 }
 
 void ModalShiftAudioProcessor::releaseResources()
@@ -160,19 +160,21 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
     const auto rootPID = static_cast<int>(param::PID::Root);
     const auto resonancePID = static_cast<int>(param::PID::Resonance);
+//    DBG(rootPID);
+//    DBG(params[rootPID]->getValue());
     myFilter.setCutoffFrequency(params[rootPID]->getValue());
     myFilter.setResonance(params[resonancePID]->getValue());
     
 //    if (! myBypassptr->get())
-//    {
-//        auto myBlock = dsp::AudioBlock<float>(buffer);
-//        
-//        // Replacing context -> puts the processed audio back into the audio stream
-//        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
-//        
-//        myFilter.process(myContext);
-//        frequencyShifter.process(myContext);
-//    }
+    {
+        auto myBlock = dsp::AudioBlock<float>(buffer);
+        
+        // Replacing context -> puts the processed audio back into the audio stream
+        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
+        
+        myFilter.process(myContext);
+        frequencyShifter.process(myContext);
+    }
     
     
     
