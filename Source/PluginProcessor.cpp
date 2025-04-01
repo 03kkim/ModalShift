@@ -157,27 +157,7 @@ bool ModalShiftAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    
-    const auto rootPID = static_cast<int>(param::PID::Root);
-    const auto resonancePID = static_cast<int>(param::PID::Resonance);
-//    DBG(rootPID);
-//    DBG(params[rootPID]->getValue());
-    myFilter.setCutoffFrequency(params[rootPID]->getValue());
-    myFilter.setResonance(params[resonancePID]->getValue());
-    
-//    if (! myBypassptr->get())
-    {
-        auto myBlock = dsp::AudioBlock<float>(buffer);
-        
-        // Replacing context -> puts the processed audio back into the audio stream
-        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
-        
-        myFilter.process(myContext);
-        frequencyShifter.process(myContext);
-    }
-    
-    
-    
+
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -203,6 +183,35 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 
         // ..do something to the data...
     }
+    
+    
+    
+    //    juce::MidiBuffer processedMidi;
+        
+        
+        const auto rootPID = static_cast<int>(param::PID::Root);
+        const auto rootNorm = params[rootPID]->getValue();
+        const auto rootFreq = params[rootPID]->getNormalisableRange().convertFrom0to1(rootNorm);
+    
+        const auto resonancePID = static_cast<int>(param::PID::Resonance);
+        const auto resonanceNorm = params[resonancePID]->getValue();
+    const auto resonance = params[resonancePID]->getNormalisableRange().convertFrom0to1(resonanceNorm);
+        
+        myFilter.setCutoffFrequency(rootFreq);
+        myFilter.setResonance(resonance);
+//        DBG("Root: " + String(params[rootPID]->getValue()) + " - " + String(rootFreq));
+        DBG("Reso: " + String(params[resonancePID]->getValue()) + " - " + String(resonance));
+        
+    //    if (! myBypassptr->get())
+        {
+            auto myBlock = dsp::AudioBlock<float>(buffer);
+            
+            // Replacing context -> puts the processed audio back into the audio stream
+            auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
+            
+            myFilter.process(myContext);
+//            frequencyShifter.process(myContext);
+        }
 }
 
 //==============================================================================
