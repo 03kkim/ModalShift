@@ -9,6 +9,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+
 //==============================================================================
 ModalShiftAudioProcessor::ModalShiftAudioProcessor()
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -157,7 +158,9 @@ bool ModalShiftAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-
+//    buffer.clear();
+    midiProcessor.process(midiMessages);
+    
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -186,7 +189,7 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
     
     
-    //    juce::MidiBuffer processedMidi;
+        juce::MidiBuffer processedMidi;
         
         
         const auto rootPID = static_cast<int>(param::PID::Root);
@@ -200,7 +203,7 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         myFilter.setCutoffFrequency(rootFreq);
         myFilter.setResonance(resonance);
 //        DBG("Root: " + String(params[rootPID]->getValue()) + " - " + String(rootFreq));
-        DBG("Reso: " + String(params[resonancePID]->getValue()) + " - " + String(resonance));
+//        DBG("Reso: " + String(params[resonancePID]->getValue()) + " - " + String(resonance));
         
     //    if (! myBypassptr->get())
         {

@@ -11,6 +11,7 @@
 #include <JuceHeader.h>
 #include "DSP/FrequencyShifter.h"
 #include "Params.h"
+#include "MidiProcessor.h"
 
 //==============================================================================
 /**
@@ -74,6 +75,7 @@ private:
     
     xynth::FrequencyShifter frequencyShifter;
 //    NoteParameter* noteParam;
+    MidiProcessor midiProcessor;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ModalShiftAudioProcessor)
