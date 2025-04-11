@@ -331,7 +331,7 @@ inline Layout createParameterLayout()
 //    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
     createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
-    createParam(params, PID::Shift, range::lin(-1000.f, 1000.f), 0.f, Unit::Hz);
+//    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);
     
     return {params.begin(), params.end()};
 }

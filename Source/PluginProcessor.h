@@ -73,7 +73,10 @@ private:
     
     juce::dsp::Oscillator<float> osc;
     
+    std::atomic<float> shiftAmt{0.0f};
+    
     xynth::FrequencyShifter frequencyShifter;
+    
 //    NoteParameter* noteParam;
     MidiProcessor midiProcessor;
     
