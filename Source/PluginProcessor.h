@@ -69,6 +69,7 @@ public:
 
 private:
     dsp::StateVariableTPTFilter<float> myFilter;
+    dsp::StateVariableTPTFilter<float> myFilter2;
     dsp::ProcessSpec mySpec;
     
     juce::dsp::Oscillator<float> osc;

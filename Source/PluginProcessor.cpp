@@ -120,6 +120,9 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     
     myFilter.prepare(mySpec);
     myFilter.reset();
+
+    myFilter2.prepare(mySpec); // Prepare the second filter
+    myFilter2.reset();
     
     frequencyShifter.prepare(mySpec);
     frequencyShifter.reset();
@@ -192,7 +195,6 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
     juce::MidiBuffer processedMidi;
     
-    
     const auto rootPID = static_cast<int>(param::PID::Root);
     const auto rootNorm = params[rootPID]->getValue();
     const auto rootFreq = params[rootPID]->getNormalisableRange().convertFrom0to1(rootNorm);
@@ -201,22 +203,64 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     const auto resonanceNorm = params[resonancePID]->getValue();
     const auto resonance = params[resonancePID]->getNormalisableRange().convertFrom0to1(resonanceNorm);
     
-    myFilter.setCutoffFrequency(rootFreq);
-    myFilter.setResonance(resonance);
-//        DBG("Root: " + String(params[rootPID]->getValue()) + " - " + String(rootFreq));
-//        DBG("Reso: " + String(params[resonancePID]->getValue()) + " - " + String(resonance));
     
-//    if (! myBypassptr->get())
     
     midiProcessor.process(midiMessages, shiftAmt, rootFreq);
+    
+    // // Create an AudioBlock from the buffer
+    // juce::dsp::AudioBlock<float> mainBlock(buffer);
+
+    // // Split the signal into two separate blocks
+    // juce::dsp::AudioBlock<float> block1 = mainBlock;
+    // juce::dsp::AudioBlock<float> block2 = mainBlock;
+
+    // Create separate buffers for each processing branch
+    juce::AudioBuffer<float> buffer1(buffer.getNumChannels(), buffer.getNumSamples());
+    juce::AudioBuffer<float> buffer2(buffer.getNumChannels(), buffer.getNumSamples());
+
+    // Copy the input buffer into both branch buffers
+    buffer1.makeCopyOf(buffer);
+    buffer2.makeCopyOf(buffer);
+
+    // Create AudioBlocks for each buffer
+    juce::dsp::AudioBlock<float> block1(buffer1);
+    juce::dsp::AudioBlock<float> block2(buffer2);
+
+    // Replacing context -> puts the processed audio back into the audio stream
+    auto context1 = dsp::ProcessContextReplacing<float>(block1);
     {
-        auto myBlock = dsp::AudioBlock<float>(buffer);
+        myFilter.setCutoffFrequency(rootFreq);
+        myFilter.setResonance(resonance);
+        myFilter.process(context1);
+//        frequencyShifter.process(context1);
+    }
+
+    auto context2 = dsp::ProcessContextReplacing<float>(block2);
+    {
+        if (rootFreq * 2.f < mySpec.sampleRate / 2.f)
+        {
+            myFilter2.setCutoffFrequency(rootFreq * 2.f);
+            myFilter2.setResonance(resonance);
+            myFilter2.process(context2);
+        }
+        else
+        {
+            block2.multiplyBy(0.0f);
+        }
+
         
-        // Replacing context -> puts the processed audio back into the audio stream
-        auto myContext = dsp::ProcessContextReplacing<float>(myBlock);
-        
-        myFilter.process(myContext);
-        frequencyShifter.process(myContext);
+//        frequencyShifter.process(context2);
+    }
+    for (size_t channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        auto* channelData1 = buffer1.getReadPointer(channel);
+        auto* channelData2 = buffer2.getReadPointer(channel);
+        auto* mainChannelData = buffer.getWritePointer(channel);
+
+        for (size_t sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            mainChannelData[sample] = channelData1[sample] + channelData2[sample];
+        }
     }
         
         
