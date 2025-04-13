@@ -33,6 +33,7 @@ enum class PID
     Root,
     Resonance,
     Shift,
+    NumHarmonics,
     NumParams
 };
 static constexpr int NumParams = static_cast<int>(PID::NumParams);
@@ -42,6 +43,7 @@ enum class Unit
     Db,
     Hz,
     Unitless,
+    Integer,
     NoteUnit,
     NumUnits
 };
@@ -62,6 +64,8 @@ inline String toName(PID pID)
             return "Resonance";
         case PID::Shift:
             return "Shift";
+        case PID::NumHarmonics:
+            return "Num of Harmonics";
         default:
             return "Unknown";
     }
@@ -84,6 +88,7 @@ inline String toString(Unit unit)
         case Unit::Db: return "dB";
         case Unit::Hz: return "Hz";
         case Unit::Unitless: return "";
+        case Unit::Integer: return "";
         case Unit::NoteUnit: return "";
         default: return "Unknown";
     }
@@ -208,6 +213,14 @@ inline ValToStr unitless()
         };
 }
 
+inline ValToStr integer()
+{
+    return [](float val, int)
+    {
+        return String(static_cast<int>(val));
+    };
+}
+
 inline ValToStr noteunit()
 {
     return [](float val, int)
@@ -263,6 +276,14 @@ inline StrToVal unitless()
     };
 }
 
+inline StrToVal integer()
+{
+    return [](const String& str)
+    {
+        return static_cast<float>(str.getIntValue());
+    };
+}
+
 inline StrToVal noteunit()
 {
     return [](const String& str)
@@ -305,6 +326,10 @@ inline void createParam(UniqueRAPVector& vec, PID pID, RangeF range, float defau
             valToStr = valToStr::unitless();
             strToVal = strToVal::unitless();
             break;
+        case Unit::Integer:
+            valToStr = valToStr::integer();
+            strToVal = strToVal::integer();
+            break;
         case Unit::NoteUnit:
             valToStr = valToStr::noteunit();
             strToVal = strToVal::noteunit();
@@ -331,6 +356,7 @@ inline Layout createParameterLayout()
 //    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
     createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
+    createParam(params, PID::NumHarmonics, range::stepped(1.f, 32.f), 8.f, Unit::Integer);
 //    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);
     
     return {params.begin(), params.end()};
