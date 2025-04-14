@@ -67,6 +67,8 @@ inline String toName(PID pID)
             return "Shift";
         case PID::NumHarmonics:
             return "Num of Harmonics";
+        case PID::FilterOrder:
+            return "Filter Order";
         default:
             return "Unknown";
     }
@@ -357,7 +359,7 @@ inline Layout createParameterLayout()
 //    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
     createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
-    createParam(params, PID::NumHarmonics, range::stepped(1.f, 32.f), 8.f, Unit::Integer);
+    createParam(params, PID::NumHarmonics, range::stepped(1.f, 64.f), 8.f, Unit::Integer);
     createParam(params, PID::FilterOrder, range::stepped(1.f, 8.f), 2.f, Unit::Integer);
     
 //    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);

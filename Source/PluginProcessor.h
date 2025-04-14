@@ -28,6 +28,8 @@ public:
     
 //    AudioParameterFloat* myFreqShiftptr;
     std::vector<param::RAP*> params;
+    static const int MAX_ORDER = 8;
+    static const int MAX_HARMONICS = 64;
     
     
     //==============================================================================
@@ -70,7 +72,13 @@ public:
 private:
 
     // Add a fixed-size vector to store filters
-    std::array<juce::dsp::StateVariableTPTFilter<float>, 32> filters;
+    // std::array<juce::dsp::StateVariableTPTFilter<float>, 32> filters;
+
+//    std::array<juce::dsp::IIR::Filter<float>, 32> filters;
+    
+    // possibility of 8th-order band pass, 32 harmonics
+    
+    std::array<std::array<std::array<juce::dsp::IIR::Filter<float>, MAX_ORDER>, MAX_HARMONICS>, 2> filters;
     
     dsp::ProcessSpec mySpec;
     

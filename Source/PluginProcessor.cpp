@@ -104,10 +104,18 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     mySpec.maximumBlockSize = samplesPerBlock;
     mySpec.numChannels = getTotalNumOutputChannels();
     
-    for (auto& filter : filters) {
-        filter.prepare(mySpec);
-        filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
-        filter.reset();
+    for (auto& filterStack : filters) {
+        for (auto i = 0; i < MAX_ORDER; i++)
+        {
+            auto& filter = filterStack[i];
+            filter[0].prepare(mySpec);
+            filter[1].prepare(mySpec);
+    //            filter.coefficients = juce::dsp::IIR::Coefficients<float>::makeBandPass(sampleRate, 1000.0f, 1.0f); // Default values
+            filter[0].reset();
+            filter[1].reset();
+        }
+        
+        
     }
     
     frequencyShifter.prepare(mySpec);
@@ -169,6 +177,10 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     const auto numHarmonicsPID = static_cast<int>(param::PID::NumHarmonics);
     const auto numHarmonicsNorm = params[numHarmonicsPID]->getValue();
     const auto numHarmonics = params[numHarmonicsPID]->getNormalisableRange().convertFrom0to1(numHarmonicsNorm);
+    
+    const auto filterOrderPID = static_cast<int>(param::PID::FilterOrder);
+    const auto filterOrderNorm = params[filterOrderPID]->getValue();
+    const auto filterOrder = params[filterOrderPID]->getNormalisableRange().convertFrom0to1(filterOrderNorm);
 
     midiProcessor.process(midiMessages, shiftAmt, rootFreq);
 
@@ -176,29 +188,52 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
 
     // Create separate buffers for each filter
-    std::vector<juce::AudioBuffer<float>> filterBuffers(filters.size(), juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples()));
+    std::vector<juce::AudioBuffer<float>> filterBuffers(MAX_HARMONICS, juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples()));
 
     // Copy the input buffer into each filter buffer
     for (auto& filterBuffer : filterBuffers) {
         filterBuffer.makeCopyOf(buffer);
     }
+    
 
     // Process only the active filters based on NumHarmonics
-    for (int i = 0; i < numHarmonics; ++i) {
-        auto harmonicFreq = rootFreq * static_cast<float>(i + 1); // Harmonic frequency
-//        DBG(String(harmonicFreq));
-        if (harmonicFreq < mySpec.sampleRate / 2.0f) { // Ensure frequency is within Nyquist limit
-            filters[i].setCutoffFrequency(harmonicFreq);
-            filters[i].setResonance(resonance);
+    for (int harmonic = 0; harmonic < numHarmonics; ++harmonic)
+        {
+            auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1); // Harmonic frequency
 
-            juce::dsp::AudioBlock<float> block(filterBuffers[i]);
-            auto context = juce::dsp::ProcessContextReplacing<float>(block);
-            filters[i].process(context);
-            
-        } else {
-            filterBuffers[i].clear(); // Clear buffer if frequency is out of range
+            if (harmonicFreq < mySpec.sampleRate / 2.0f) // Ensure frequency is within Nyquist limit
+            {
+                auto coefs = juce::dsp::IIR::Coefficients<float>::makeBandPass(mySpec.sampleRate, harmonicFreq, resonance);
+
+                // Process each channel separately
+                for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+                {
+                    juce::dsp::AudioBlock<float> block(filterBuffers[harmonic]);
+                    auto channelBlock = block.getSingleChannelBlock(channel);
+                    auto context = juce::dsp::ProcessContextReplacing<float>(channelBlock);
+
+                    auto& filter = filters[channel][harmonic];
+                    for (int stage = 0; stage < filterOrder; ++stage)
+                    {
+                        if (stage < filterOrder)
+                        {
+                            filter[stage].coefficients = coefs;
+                            filter[stage].process(context);
+                        }
+                        else
+                        {
+                            filter[stage].reset();
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // Clear buffer if frequency is out of range
+                for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+                    filterBuffers[harmonic].clear(channel, 0, buffer.getNumSamples());
+            }
         }
-    }
 
     // Sum the processed buffers into the main buffer
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
