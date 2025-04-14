@@ -68,8 +68,10 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-    dsp::StateVariableTPTFilter<float> myFilter;
-    dsp::StateVariableTPTFilter<float> myFilter2;
+
+    // Add a fixed-size vector to store filters
+    std::array<juce::dsp::StateVariableTPTFilter<float>, 32> filters;
+    
     dsp::ProcessSpec mySpec;
     
     juce::dsp::Oscillator<float> osc;

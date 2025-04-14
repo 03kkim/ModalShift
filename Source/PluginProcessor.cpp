@@ -21,28 +21,14 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
                        ), apvts(*this, nullptr, "Parameters", param::createParameterLayout()),
-//  {
-//         std::make_unique<AudioParameterFloat>("root", "ROOT", 20.0f, 20000.0f, 440.0f),
-//         std::make_unique<AudioParameterFloat>("resonance", "RES", 0.707f, 10.0f, 2.66f),
-//         std::make_unique<AudioParameterFloat>(ParameterID{ "shift",  1 }, "Shift", -1000.f, 1000.f, 0.f),
-//         std::make_unique<AudioParameterBool>("bypass", "BYPASS", false),
-//         std::make_unique<NoteParameter>("note", "NOTE")
-//         
-//     }),
-//        frequencyShifter(*apvts.getRawParameterValue("shift"))
         frequencyShifter(shiftAmt)
 #endif
 {
-//    myRootptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("root"));
-//    myResonanceptr = dynamic_cast<AudioParameterFloat*>(myValueTreeState.getParameter("resonance"));
-//    myBypassptr = dynamic_cast<AudioParameterBool*>(myValueTreeState.getParameter("bypass"));
     for (auto i = 0; i < param::NumParams; ++i)
     {
         auto pID = static_cast<param::PID>(i);
         params.push_back(apvts.getParameter(param::toID(pID).getParamID()));
     }
-
-    
 }
 
 ModalShiftAudioProcessor::~ModalShiftAudioProcessor()
@@ -118,11 +104,11 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     mySpec.maximumBlockSize = samplesPerBlock;
     mySpec.numChannels = getTotalNumOutputChannels();
     
-    myFilter.prepare(mySpec);
-    myFilter.reset();
-
-    myFilter2.prepare(mySpec); // Prepare the second filter
-    myFilter2.reset();
+    for (auto& filter : filters) {
+        filter.prepare(mySpec);
+        filter.setType(juce::dsp::StateVariableTPTFilterType::bandpass);
+        filter.reset();
+    }
     
     frequencyShifter.prepare(mySpec);
     frequencyShifter.reset();
@@ -162,37 +148,13 @@ bool ModalShiftAudioProcessor::isBusesLayoutSupported (const BusesLayout& layout
 
 void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-//    buffer.clear();
-    
-    
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
 
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
-    {
-        auto* channelData = buffer.getWritePointer (channel);
-
-        // ..do something to the data...
-    }
-    
-    
-    
     juce::MidiBuffer processedMidi;
     
     const auto rootPID = static_cast<int>(param::PID::Root);
@@ -204,66 +166,55 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     const auto resonance = params[resonancePID]->getNormalisableRange().convertFrom0to1(resonanceNorm);
     
     
-    
+    const auto numHarmonicsPID = static_cast<int>(param::PID::NumHarmonics);
+    const auto numHarmonicsNorm = params[numHarmonicsPID]->getValue();
+    const auto numHarmonics = params[numHarmonicsPID]->getNormalisableRange().convertFrom0to1(numHarmonicsNorm);
+
     midiProcessor.process(midiMessages, shiftAmt, rootFreq);
+
+
     
-    // // Create an AudioBlock from the buffer
-    // juce::dsp::AudioBlock<float> mainBlock(buffer);
 
-    // // Split the signal into two separate blocks
-    // juce::dsp::AudioBlock<float> block1 = mainBlock;
-    // juce::dsp::AudioBlock<float> block2 = mainBlock;
+    // Create separate buffers for each filter
+    std::vector<juce::AudioBuffer<float>> filterBuffers(filters.size(), juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples()));
 
-    // Create separate buffers for each processing branch
-    juce::AudioBuffer<float> buffer1(buffer.getNumChannels(), buffer.getNumSamples());
-    juce::AudioBuffer<float> buffer2(buffer.getNumChannels(), buffer.getNumSamples());
-
-    // Copy the input buffer into both branch buffers
-    buffer1.makeCopyOf(buffer);
-    buffer2.makeCopyOf(buffer);
-
-    // Create AudioBlocks for each buffer
-    juce::dsp::AudioBlock<float> block1(buffer1);
-    juce::dsp::AudioBlock<float> block2(buffer2);
-
-    // Replacing context -> puts the processed audio back into the audio stream
-    auto context1 = dsp::ProcessContextReplacing<float>(block1);
-    {
-        myFilter.setCutoffFrequency(rootFreq);
-        myFilter.setResonance(resonance);
-        myFilter.process(context1);
-//        frequencyShifter.process(context1);
+    // Copy the input buffer into each filter buffer
+    for (auto& filterBuffer : filterBuffers) {
+        filterBuffer.makeCopyOf(buffer);
     }
 
-    auto context2 = dsp::ProcessContextReplacing<float>(block2);
-    {
-        if (rootFreq * 2.f < mySpec.sampleRate / 2.f)
-        {
-            myFilter2.setCutoffFrequency(rootFreq * 2.f);
-            myFilter2.setResonance(resonance);
-            myFilter2.process(context2);
-        }
-        else
-        {
-            block2.multiplyBy(0.0f);
-        }
+    // Process only the active filters based on NumHarmonics
+    for (int i = 0; i < numHarmonics; ++i) {
+        auto harmonicFreq = rootFreq * static_cast<float>(i + 1); // Harmonic frequency
+//        DBG(String(harmonicFreq));
+        if (harmonicFreq < mySpec.sampleRate / 2.0f) { // Ensure frequency is within Nyquist limit
+            filters[i].setCutoffFrequency(harmonicFreq);
+            filters[i].setResonance(resonance);
 
-        
-//        frequencyShifter.process(context2);
+            juce::dsp::AudioBlock<float> block(filterBuffers[i]);
+            auto context = juce::dsp::ProcessContextReplacing<float>(block);
+            filters[i].process(context);
+            
+        } else {
+            filterBuffers[i].clear(); // Clear buffer if frequency is out of range
+        }
     }
-    for (size_t channel = 0; channel < buffer.getNumChannels(); ++channel)
-    {
-        auto* channelData1 = buffer1.getReadPointer(channel);
-        auto* channelData2 = buffer2.getReadPointer(channel);
+
+    // Sum the processed buffers into the main buffer
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel) {
         auto* mainChannelData = buffer.getWritePointer(channel);
 
-        for (size_t sample = 0; sample < buffer.getNumSamples(); ++sample)
-        {
-            mainChannelData[sample] = channelData1[sample] + channelData2[sample];
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
+            float combinedSample = 0.0f;
+
+            for (int i = 0; i < numHarmonics; ++i) {
+                combinedSample += filterBuffers[i].getReadPointer(channel)[sample];
+            }
+
+//            mainChannelData[sample] = combinedSample / static_cast<float>(numHarmonics); // Normalize to avoid clipping
+            mainChannelData[sample] = combinedSample;
         }
     }
-        
-        
 }
 
 //==============================================================================
@@ -274,16 +225,12 @@ bool ModalShiftAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ModalShiftAudioProcessor::createEditor()
 {
-//    return new ModalShiftAudioProcessorEditor (*this);
     return new GenericAudioProcessorEditor(*this);
 }
 
 //==============================================================================
 void ModalShiftAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
     auto state = apvts.copyState();
     std::unique_ptr<XmlElement> xml(state.createXml());
     copyXmlToBinary(*xml, destData);
@@ -291,9 +238,6 @@ void ModalShiftAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 
 void ModalShiftAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
-    
     std::unique_ptr<XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
     
     if (xmlState != nullptr)

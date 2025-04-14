@@ -34,6 +34,7 @@ enum class PID
     Resonance,
     Shift,
     NumHarmonics,
+    FilterOrder,
     NumParams
 };
 static constexpr int NumParams = static_cast<int>(PID::NumParams);
@@ -357,6 +358,8 @@ inline Layout createParameterLayout()
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
     createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
     createParam(params, PID::NumHarmonics, range::stepped(1.f, 32.f), 8.f, Unit::Integer);
+    createParam(params, PID::FilterOrder, range::stepped(1.f, 8.f), 2.f, Unit::Integer);
+    
 //    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);
     
     return {params.begin(), params.end()};
