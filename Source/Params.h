@@ -14,6 +14,10 @@
 #include <unordered_map>
 #include <cmath>
 
+static const int MAX_ORDER = 4;
+static const int MAX_HARMONICS = 8;
+
+
 namespace param
 {
 using APVTS = AudioProcessorValueTreeState;
@@ -358,9 +362,9 @@ inline Layout createParameterLayout()
     
 //    createParam(params, PID::GainWet, range::lin(-12.f, 12.f), 0.f, Unit::Db);
     createParam(params, PID::Root, range::withCentre(midiNoteToFrequency(0), midiNoteToFrequency(127), midiNoteToFrequency(69)), midiNoteToFrequency(69), Unit::NoteUnit);
-    createParam(params, PID::Resonance, range::lin(0.707f,  10.f), 2.66f, Unit::Unitless);
-    createParam(params, PID::NumHarmonics, range::stepped(1.f, 64.f), 8.f, Unit::Integer);
-    createParam(params, PID::FilterOrder, range::stepped(1.f, 8.f), 2.f, Unit::Integer);
+    createParam(params, PID::Resonance, range::lin(0.707f,  20.f), 2.66f, Unit::Unitless);
+    createParam(params, PID::NumHarmonics, range::stepped(1.f, static_cast<float>(MAX_HARMONICS)), 8.f, Unit::Integer);
+    createParam(params, PID::FilterOrder, range::stepped(1.f, 4.f), 2.f, Unit::Integer);
     
 //    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);
     

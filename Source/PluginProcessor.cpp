@@ -20,10 +20,18 @@ ModalShiftAudioProcessor::ModalShiftAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       ), apvts(*this, nullptr, "Parameters", param::createParameterLayout()),
-        frequencyShifter(shiftAmt)
+                       ), apvts(*this, nullptr, "Parameters", param::createParameterLayout())
+//        frequencyShifter(shiftAmt)
 #endif
 {
+    // Initialize the shifters array
+    for (size_t channel = 0; channel < 2; ++channel)
+    {
+        for (size_t harmonic = 0; harmonic < MAX_HARMONICS; ++harmonic)
+        {
+            shifters[channel][harmonic] = std::make_unique<xynth::FrequencyShifter>(shiftAmt[channel][harmonic]);
+        }
+    }
     for (auto i = 0; i < param::NumParams; ++i)
     {
         auto pID = static_cast<param::PID>(i);
@@ -104,6 +112,14 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     mySpec.maximumBlockSize = samplesPerBlock;
     mySpec.numChannels = getTotalNumOutputChannels();
     
+    for (size_t channel = 0; channel < shifters.size(); ++channel)
+    {
+        for (size_t harmonic = 0; harmonic < shifters[channel].size(); ++harmonic)
+        {
+            shifters[channel][harmonic]->prepare(mySpec);
+            shifters[channel][harmonic]->reset();
+        }
+    }
     for (auto& filterStack : filters) {
         for (auto i = 0; i < MAX_ORDER; i++)
         {
@@ -118,8 +134,8 @@ void ModalShiftAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
         
     }
     
-    frequencyShifter.prepare(mySpec);
-    frequencyShifter.reset();
+//    frequencyShifter.prepare(mySpec);
+//    frequencyShifter.reset();
 }
 
 void ModalShiftAudioProcessor::releaseResources()
@@ -182,11 +198,12 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     const auto filterOrderNorm = params[filterOrderPID]->getValue();
     const auto filterOrder = params[filterOrderPID]->getNormalisableRange().convertFrom0to1(filterOrderNorm);
 
-    midiProcessor.process(midiMessages, shiftAmt, rootFreq);
+    
 
 
     
-
+    midiProcessor.process(midiMessages, shiftAmt, rootFreq);
+    
     // Create separate buffers for each filter
     std::vector<juce::AudioBuffer<float>> filterBuffers(MAX_HARMONICS, juce::AudioBuffer<float>(buffer.getNumChannels(), buffer.getNumSamples()));
 
@@ -196,16 +213,14 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     }
     
 
-    // Process only the active filters based on NumHarmonics
     for (int harmonic = 0; harmonic < numHarmonics; ++harmonic)
         {
-            auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1); // Harmonic frequency
+            auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1);
 
-            if (harmonicFreq < mySpec.sampleRate / 2.0f) // Ensure frequency is within Nyquist limit
+            if (harmonicFreq < mySpec.sampleRate / 2.0f) // Ensure frequency is below Nyquist
             {
                 auto coefs = juce::dsp::IIR::Coefficients<float>::makeBandPass(mySpec.sampleRate, harmonicFreq, resonance);
-
-                // Process each channel separately
+                
                 for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
                 {
                     juce::dsp::AudioBlock<float> block(filterBuffers[harmonic]);
@@ -225,6 +240,8 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
                             filter[stage].reset();
                         }
                     }
+                    DBG("Harmonic: " + String(harmonic) + " | Value: " + String(shiftAmt[channel][harmonic]));
+                    shifters[channel][harmonic]->process(context);
                 }
             }
             else

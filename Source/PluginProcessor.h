@@ -28,8 +28,7 @@ public:
     
 //    AudioParameterFloat* myFreqShiftptr;
     std::vector<param::RAP*> params;
-    static const int MAX_ORDER = 8;
-    static const int MAX_HARMONICS = 64;
+    
     
     
     //==============================================================================
@@ -70,23 +69,19 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
-
-    // Add a fixed-size vector to store filters
-    // std::array<juce::dsp::StateVariableTPTFilter<float>, 32> filters;
-
-//    std::array<juce::dsp::IIR::Filter<float>, 32> filters;
     
-    // possibility of 8th-order band pass, 32 harmonics
+    // possibility of 4th-order band pass, 32 harmonics
     
     std::array<std::array<std::array<juce::dsp::IIR::Filter<float>, MAX_ORDER>, MAX_HARMONICS>, 2> filters;
+    std::array<std::array<std::unique_ptr<xynth::FrequencyShifter>, MAX_HARMONICS>, 2> shifters;
     
     dsp::ProcessSpec mySpec;
     
     juce::dsp::Oscillator<float> osc;
     
-    std::atomic<float> shiftAmt{0.0f};
+    std::array<std::array<std::atomic<float>, MAX_HARMONICS>, 2> shiftAmt{0.0f};
     
-    xynth::FrequencyShifter frequencyShifter;
+//    xynth::FrequencyShifter frequencyShifter;
     
 //    NoteParameter* noteParam;
     MidiProcessor midiProcessor;
