@@ -22,7 +22,7 @@ public:
     FrequencyShifter(std::atomic<float>& frequencyParameter);
 
     void prepare(const juce::dsp::ProcessSpec& spec) noexcept;
-    void process(juce::dsp::ProcessContextReplacing<float>& context) noexcept;
+    void process(juce::dsp::ProcessContextReplacing<float>& context, bool antiAlias) noexcept;
 
     void reset() noexcept;
 

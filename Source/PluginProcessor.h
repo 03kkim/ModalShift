@@ -80,10 +80,15 @@ private:
     juce::dsp::Oscillator<float> osc;
     
     std::array<std::array<std::atomic<float>, MAX_HARMONICS>, 2> shiftAmt{0.0f};
-    
-//    xynth::FrequencyShifter frequencyShifter;
-    
-//    NoteParameter* noteParam;
+
+    // Create separate buffers for each filter
+    std::vector<juce::AudioBuffer<float>> filterBuffers;
+
+    const int rootPID = static_cast<int>(param::PID::Root);
+    const int resonancePID = static_cast<int>(param::PID::Resonance);
+    const int numHarmonicsPID = static_cast<int>(param::PID::NumHarmonics);
+    const int filterOrderPID = static_cast<int>(param::PID::FilterOrder);
+
     MidiProcessor midiProcessor;
     
     //==============================================================================

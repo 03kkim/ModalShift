@@ -46,30 +46,59 @@ void HilbertProcessor::reset() noexcept
 	}
 }
 
+// HilbertProcessor::Complex HilbertProcessor::processSample(float sample, int channel) noexcept
+// {
+// 	jassert(channel < states.size());
+// 	// Really we're just doing: state[i] = state[i]*poles[i] + sample*coeffs[i]
+// 	// but std::complex is slow without -ffast-math, so we've unwrapped it
+
+// 	State state = states[channel], newState;
+// 	for (int i = 0; i < order; ++i) 
+// 		newState.real[i] = state.real[i] * polesReal[i] - state.imag[i] * polesImag[i] + sample * coeffsReal[i];
+	
+// 	for (int i = 0; i < order; ++i) 
+// 		newState.imag[i] = state.real[i] * polesImag[i] + state.imag[i] * polesReal[i] + sample * coeffsImag[i];
+	
+// 	states[channel] = newState;
+
+// 	float resultReal = sample * direct;
+// 	for (int i = 0; i < order; ++i) 
+// 		resultReal += newState.real[i];
+	
+// 	float resultImag = 0;
+// 	for (int i = 0; i < order; ++i) 
+// 		resultImag += newState.imag[i];
+	
+// 	return { resultReal, resultImag };
+// }
+
+// optimized??
 HilbertProcessor::Complex HilbertProcessor::processSample(float sample, int channel) noexcept
 {
-	jassert(channel < states.size());
-	// Really we're just doing: state[i] = state[i]*poles[i] + sample*coeffs[i]
-	// but std::complex is slow without -ffast-math, so we've unwrapped it
-
-	State state = states[channel], newState;
-	for (int i = 0; i < order; ++i) 
-		newState.real[i] = state.real[i] * polesReal[i] - state.imag[i] * polesImag[i] + sample * coeffsReal[i];
-	
-	for (int i = 0; i < order; ++i) 
-		newState.imag[i] = state.real[i] * polesImag[i] + state.imag[i] * polesReal[i] + sample * coeffsImag[i];
-	
-	states[channel] = newState;
-
-	float resultReal = sample * direct;
-	for (int i = 0; i < order; ++i) 
-		resultReal += newState.real[i];
-	
-	float resultImag = 0;
-	for (int i = 0; i < order; ++i) 
-		resultImag += newState.imag[i];
-	
-	return { resultReal, resultImag };
+    jassert(channel < states.size());
+    
+    State& currentState = states[channel];
+    State newState;
+    
+    float resultReal = sample * direct;
+    float resultImag = 0;
+    
+    // Combine the loops to reduce overhead
+    for (int i = 0; i < order; ++i) 
+    {
+        // Calculate new state values
+        newState.real[i] = currentState.real[i] * polesReal[i] - currentState.imag[i] * polesImag[i] + sample * coeffsReal[i];
+        newState.imag[i] = currentState.real[i] * polesImag[i] + currentState.imag[i] * polesReal[i] + sample * coeffsImag[i];
+        
+        // Accumulate results in the same loop
+        resultReal += newState.real[i];
+        resultImag += newState.imag[i];
+    }
+    
+    // Update state only once
+    states[channel] = newState;
+    
+    return { resultReal, resultImag };
 }
 
 HilbertProcessor::Complex HilbertProcessor::processSample(Complex sample, int channel) noexcept
@@ -101,3 +130,4 @@ HilbertProcessor::Complex HilbertProcessor::processSample(Complex sample, int ch
 }
 
 } // namespace xynth
+

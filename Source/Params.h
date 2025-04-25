@@ -15,7 +15,7 @@
 #include <cmath>
 
 static const int MAX_ORDER = 4;
-static const int MAX_HARMONICS = 8;
+static const int MAX_HARMONICS = 128;
 
 
 namespace param

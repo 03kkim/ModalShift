@@ -47,6 +47,44 @@ struct HilbertIIRCoeffs {
 	}};
 	Sample direct = 0.000262057212648;
 };
+//template<typename Sample>
+//struct HilbertIIRCoeffs {
+//	static constexpr int order = 6;
+//	std::array<std::complex<Sample>, order> coeffs{{
+//					{Sample(-0.0004712906137370838), Sample(0.00011003893357621875)},
+//					{Sample(0.0017147900551436287), Sample(0.0005116053736045722)},
+//					{Sample(-0.0028035298523366456), Sample(-0.0032609058408667986)},
+//					{Sample(0.0016300313649076227), Sample(0.008396097740503275)},
+//					{Sample(0.0032174896937838585), Sample(-0.012451363336753868)},
+//					{Sample(-0.003406105025570154), Sample(0.007770267289917831)}
+//	}};
+//	std::array<std::complex<Sample>, order> poles{{
+//					{Sample(-0.05205502501426811), Sample(0.002252653769158468)},
+//					{Sample(-0.18631816929083603), Sample(0.19235078860733987)},
+//					{Sample(-0.4219023904958513), Sample(0.6825952756775048)},
+//					{Sample(-0.8391052426824052), Sample(1.732350225122252)},
+//					{Sample(-1.3390007890152609), Sample(3.726994210098028)},
+//					{Sample(-0.9125343546961187), Sample(6.304174820687268)}
+//	}};
+//	Sample direct = 0.0002619373185192895;
+//};
+//  template<typename Sample>
+//  struct HilbertIIRCoeffs {
+//      static constexpr int order = 4;
+//      std::array<std::complex<Sample>, order> coeffs{{
+//          {Sample(-5.7720806680591754e-05), Sample(-1.5135912532301272e-05)},
+//          {Sample(0.00014923204853154384), Sample(0.0001803560360932888)},
+//          {Sample(1.0656807657826294e-05), Sample(-0.000628662159240744)},
+//          {Sample(-0.0002348526095750309), Sample(0.0009908651361079876)}
+//      }};
+//      std::array<std::complex<Sample>, order> poles{{
+//          {Sample(-0.12900464053039934), Sample(-0.010957519936977156)},
+//          {Sample(-0.5060770742774507), Sample(0.46373035859224976)},
+//          {Sample(-1.3592896865483857), Sample(1.8844921510957604)},
+//          {Sample(-2.2014828001115774), Sample(5.901449480515393)}
+//      }};
+//      Sample direct = 0.0002619373185192891;
+//  };
 
 template<typename Sample>
 struct HilbertIIR {

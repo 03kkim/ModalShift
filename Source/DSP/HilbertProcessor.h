@@ -23,6 +23,7 @@ public:
     using Complex = std::complex<float>;
     using HilbertIIRCoeffs = signalsmith::hilbert::HilbertIIRCoeffs<float>;
     static constexpr int order = HilbertIIRCoeffs::order;
+    
 
 public:
     HilbertProcessor() = default;
@@ -32,6 +33,7 @@ public:
 
     Complex processSample(float sample, int channel) noexcept;
     Complex processSample(Complex sample, int channel) noexcept;
+//    void processBlock(const float* inputSamples, Complex* outputSamples, int numSamples, int channel) noexcept;
 
 protected:
     using Array = std::array<float, order>;

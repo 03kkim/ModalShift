@@ -7,7 +7,7 @@ import scipy
 import scipy.signal
 import scipy.optimize
 
-filter_order = 12
+filter_order = 6
 filter_ripple_db = 0.5
 filter_stop_db = 90
 filter_squinch = 0.5
