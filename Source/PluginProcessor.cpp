@@ -214,8 +214,13 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     }
     
     bool antiAlias = true;
-    
-    for (int harmonic = 0; harmonic < numHarmonics; ++harmonic)
+    // Calculate maximum harmonics based on Nyquist
+    int maxPossibleHarmonics = static_cast<int>(mySpec.sampleRate / (2.0f * rootFreq));
+    int effectiveHarmonics = std::min(static_cast<int>(numHarmonics), maxPossibleHarmonics);
+
+// Then use effectiveHarmonics in your processing loop
+for (int harmonic = 0; harmonic < effectiveHarmonics; ++harmonic)
+//    for (int harmonic = 0; harmonic < numHarmonics; ++harmonic)
         {
             auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1);
 //            if (harmonicFreq < mySpec.sampleRate / 2.0f) // Ensure frequency is below Nyquist
@@ -261,7 +266,7 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample) {
             float combinedSample = 0.0f;
 
-            for (int i = 0; i < numHarmonics; ++i) {
+            for (int i = 0; i < effectiveHarmonics; ++i) {
                 combinedSample += filterBuffers[i].getReadPointer(channel)[sample];
             }
 
