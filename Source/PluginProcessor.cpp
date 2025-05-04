@@ -198,9 +198,12 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     
     const auto filterOrderNorm = params[filterOrderPID]->getValue();
     const auto filterOrder = params[filterOrderPID]->getNormalisableRange().convertFrom0to1(filterOrderNorm);
+    
+    const auto stretchNorm = params[stretchPID]->getValue();
+    const auto stretch = params[stretchPID]->getNormalisableRange().convertFrom0to1(stretchNorm);
 
     
-    midiProcessor.process(midiMessages, shiftAmt, rootFreq);
+    
     
     // Copy the input buffer into each filter buffer
     for (auto& filterBuffer : filterBuffers) {
@@ -213,22 +216,30 @@ void ModalShiftAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         filterBuffer.makeCopyOf(buffer);
     }
     
+    
     bool antiAlias = true;
+    
+    midiProcessor.process(midiMessages, shiftAmt, rootFreq, stretch, numHarmonics);
+    const float lastNoteFreq = 440.f;
+    
     // Calculate maximum harmonics based on Nyquist
-    int maxPossibleHarmonics = static_cast<int>(mySpec.sampleRate / (2.0f * rootFreq));
+    int maxPossibleHarmonics = static_cast<int>(mySpec.sampleRate / (2.0f * lastNoteFreq));
     int effectiveHarmonics = std::min(static_cast<int>(numHarmonics), maxPossibleHarmonics);
+    
+    
 
 // Then use effectiveHarmonics in your processing loop
 for (int harmonic = 0; harmonic < effectiveHarmonics; ++harmonic)
 //    for (int harmonic = 0; harmonic < numHarmonics; ++harmonic)
         {
-            auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1);
+            auto harmonicFreq = rootFreq * static_cast<float>(harmonic + 1) ;
 //            if (harmonicFreq < mySpec.sampleRate / 2.0f) // Ensure frequency is below Nyquist
             {
                 auto coefs = juce::dsp::IIR::Coefficients<float>::makeBandPass(mySpec.sampleRate, harmonicFreq, resonance);
                 
                 for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
                 {
+                    
                     juce::dsp::AudioBlock<float> block(filterBuffers[harmonic]);
                     auto channelBlock = block.getSingleChannelBlock(channel);
                     auto context = juce::dsp::ProcessContextReplacing<float>(channelBlock);

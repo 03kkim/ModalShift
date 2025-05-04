@@ -39,6 +39,7 @@ enum class PID
     Shift,
     NumHarmonics,
     FilterOrder,
+    Stretch,
     NumParams
 };
 static constexpr int NumParams = static_cast<int>(PID::NumParams);
@@ -73,6 +74,8 @@ inline String toName(PID pID)
             return "Num of Harmonics";
         case PID::FilterOrder:
             return "Filter Order";
+        case PID::Stretch:
+            return "Stretch";
         default:
             return "Unknown";
     }
@@ -365,6 +368,8 @@ inline Layout createParameterLayout()
     createParam(params, PID::Resonance, range::lin(0.707f,  20.f), 2.66f, Unit::Unitless);
     createParam(params, PID::NumHarmonics, range::stepped(1.f, static_cast<float>(MAX_HARMONICS)), 8.f, Unit::Integer);
     createParam(params, PID::FilterOrder, range::stepped(1.f, 4.f), 2.f, Unit::Integer);
+//    createParam(params, PID::Stretch, range::withCentre(0.01f, 10.f, 1.f), 1.f, Unit::Unitless);
+    createParam(params, PID::Stretch, range::lin(-10.f, 10.f), 0.f, Unit::Unitless);
     
 //    createParam(params, PID::Shift, range::lin(-20000.f, 20000.f), 0.f, Unit::Hz);
     

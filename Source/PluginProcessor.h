@@ -88,6 +88,7 @@ private:
     const int resonancePID = static_cast<int>(param::PID::Resonance);
     const int numHarmonicsPID = static_cast<int>(param::PID::NumHarmonics);
     const int filterOrderPID = static_cast<int>(param::PID::FilterOrder);
+    const int stretchPID = static_cast<int>(param::PID::Stretch);
 
     MidiProcessor midiProcessor;
     
